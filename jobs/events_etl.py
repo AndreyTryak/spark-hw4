@@ -1,17 +1,4 @@
 #!/usr/bin/env python3
-"""ДЗ №4: Spark под управлением YARN — чтение, трансформация и запись данных.
-
-Шаги задания:
-  3. чтение данных, ранее загруженных в HDFS;
-  4. несколько трансформаций (приведение типов, очистка, агрегации, оконная функция);
-  5. партиционирование при сохранении (event_date);
-  6. сохранение результата как таблиц (Hive Metastore, формат Parquet).
-
-Режимы записи (--sink):
-  hive  - df.write.format("hive").saveAsTable(...)  (таблицы сразу видны в Hive)
-  path  - только Parquet-каталоги в HDFS; таблицы потом регистрирует
-          create_tables.sql через beeline (запасной вариант, см. scripts/load.sh).
-"""
 import argparse
 
 from pyspark.sql import SparkSession, Window
@@ -35,7 +22,6 @@ print("master       :", spark.sparkContext.master)
 print("applicationId:", spark.sparkContext.applicationId)
 print("version      :", spark.version)
 
-# --- 3. Чтение из HDFS (всё как строки: типы приводим сами на шаге 4) -------
 raw = (spark.read
        .option("header", True)
        .option("inferSchema", False)
@@ -44,8 +30,6 @@ raw_cnt = raw.count()
 print(f"raw rows: {raw_cnt}")
 raw.printSchema()
 
-# --- 4. Трансформации --------------------------------------------------------
-# 4.1 приведение типов; нечисловые значения превращаются в NULL
 typed = (raw
          .withColumn("event_id", F.col("event_id").cast("long"))
          .withColumn("user_id", F.col("user_id").cast("int"))
@@ -54,21 +38,18 @@ typed = (raw
          .withColumn("event_type", F.lower(F.trim("event_type")))
          .withColumn("country", F.upper(F.trim("country"))))
 
-# 4.2 очистка: убираем строки с пропусками в ключевых полях и дубликаты
 clean = (typed
          .filter(F.col("event_id").isNotNull() & F.col("user_id").isNotNull()
                  & F.col("event_ts").isNotNull() & F.col("amount").isNotNull()
                  & F.col("event_type").isNotNull() & (F.col("event_type") != ""))
          .dropDuplicates(["event_id"]))
 
-# 4.3 производные столбцы; event_date станет столбцом партиционирования
 events_clean = (clean
                 .withColumn("event_hour", F.hour("event_ts"))
                 .withColumn("event_date", F.to_date("event_ts"))
                 .select("event_id", "user_id", "event_type", "country",
                         "amount", "event_hour", "event_date"))
 
-# 4.4 агрегация: статистика по дню / стране / типу события
 agg = (events_clean
        .groupBy("event_date", "country", "event_type")
        .agg(F.count("*").alias("events_cnt"),
@@ -76,7 +57,6 @@ agg = (events_clean
             F.sum("amount").alias("total_amount"),
             F.round(F.avg("amount").cast("double"), 2).alias("avg_amount")))
 
-# 4.5 оконная функция: ранг строки внутри дня по суммарной выручке
 w = Window.partitionBy("event_date").orderBy(F.col("total_amount").desc())
 daily_stats = (agg
                .withColumn("rank_in_day", F.dense_rank().over(w))
@@ -86,8 +66,6 @@ daily_stats = (agg
 clean_cnt = events_clean.count()
 print(f"clean rows: {clean_cnt} (dropped {raw_cnt - clean_cnt})")
 
-# --- 5-6. Сохранение с партиционированием как таблицы --------------------------
-# repartition по ключу партиции => по одному файлу на партицию, без россыпи мелких
 events_out = events_clean.repartition("event_date")
 stats_out = daily_stats.repartition("event_date")
 
@@ -116,6 +94,5 @@ else:
 
 daily_stats.orderBy("event_date", "rank_in_day").show(10, truncate=False)
 
-# строка-маркер, которую парсит scripts/verify.sh
 print(f"RESULT events_clean={n_clean} daily_stats={n_stats} raw={raw_cnt}")
 spark.stop()
