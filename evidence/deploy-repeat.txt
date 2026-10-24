@@ -1,0 +1,21 @@
+
+==> Checking HDFS, YARN and Hive baseline
+2026-10-24 10:42:39,120 INFO client.DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at /10.22.0.11:8032
+
+==> Checking python3 on all VMs (PySpark executors need it)
+python3 OK on 10.22.0.11
+python3 OK on 10.22.0.12
+python3 OK on 10.22.0.13
+
+==> Installing and verifying official Apache Spark archive
+
+==> Configuring Spark for YARN and the HW3 Metastore
+
+==> Preparing HDFS directories and the Spark jars archive for YARN
+
+==> Smoke test: SparkPi on YARN
+Pi is roughly 3.145320
+   /___/ .__/\_,_/_/ /_/\_\   version 3.5.3
+Using Scala version 2.12.18, OpenJDK 64-Bit Server VM, 11.0.32.1
+
+==> Deployment complete. Next: ./scripts/load.sh && ./scripts/verify.sh

@@ -1,0 +1,40 @@
+==> Spark application on YARN
+application_1791554282332_0014	      hw4-events-etl	               SPARK	      team	root.default	          FINISHED	         SUCCEEDED	           100%	                                N/A
+==> Tables and partitions read with the standard Hive client (beeline)
+daily_stats
+events_clean
+event_date=2026-10-20
+event_date=2026-10-21
+event_date=2026-10-22
+event_date=2026-10-23
+event_date=2026-10-24
+1	4193	logout	GE	0.00	4	2026-10-20
+2	3446	purchase	US	3126.35	8	2026-10-20
+3	1966	purchase	RU	2953.28	17	2026-10-20
+4	4017	view	GE	0.00	3	2026-10-20
+5	3084	refund	GE	4650.12	12	2026-10-20
+==> Expected result computed from the input files (independently of Spark)
+2026-10-20	1452	840854.61
+2026-10-21	1464	983596.56
+2026-10-22	1458	845427.51
+2026-10-23	1454	914012.84
+2026-10-24	1454	897196.99
+==> Hive: rows and amounts per partition of hw4.events_clean
+2026-10-20	1452	840854.61
+2026-10-21	1464	983596.56
+2026-10-22	1458	845427.51
+2026-10-23	1454	914012.84
+2026-10-24	1454	897196.99
+PASS: events_clean in Hive matches the input files.
+PASS: daily_stats has 150 rows, one partition per day.
+==> HDFS warehouse directory
+Found 5 items
+drwxr-xr-x   - team supergroup          0 2026-10-24 10:44 /user/team/spark-hw4/warehouse/hw4.db/events_clean/event_date=2026-10-20
+drwxr-xr-x   - team supergroup          0 2026-10-24 10:44 /user/team/spark-hw4/warehouse/hw4.db/events_clean/event_date=2026-10-21
+drwxr-xr-x   - team supergroup          0 2026-10-24 10:44 /user/team/spark-hw4/warehouse/hw4.db/events_clean/event_date=2026-10-22
+drwxr-xr-x   - team supergroup          0 2026-10-24 10:44 /user/team/spark-hw4/warehouse/hw4.db/events_clean/event_date=2026-10-23
+drwxr-xr-x   - team supergroup          0 2026-10-24 10:44 /user/team/spark-hw4/warehouse/hw4.db/events_clean/event_date=2026-10-24
+Live datanodes (3):
+2026-10-24 10:48:31,675 INFO client.DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at /10.22.0.11:8032
+Total Nodes:3
+PASS: Spark on YARN, 7282 rows in Hive match input files, daily_stats=150 rows, HDFS=3, YARN=3.
