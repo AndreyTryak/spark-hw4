@@ -21,7 +21,6 @@ log() { printf '\n==> %s\n' "$*"; }
 command -v sudo >/dev/null || die 'sudo is required.'
 sudo -n true
 if [[ -e "$SPARK_HOME" && ! -f "$SPARK_HOME/.spark-hw4-owned" ]]; then
-  # installation made by an earlier run of this deploy.sh, before the marker file existed
   grep -qE 'spark-hw4|HW4' "$SPARK_HOME/conf/spark-defaults.conf" 2>/dev/null \
     && touch "$SPARK_HOME/.spark-hw4-owned" \
     || die 'Existing Spark installation is not owned by HW4.'
